@@ -215,7 +215,8 @@ func (s *ProxyHandler) HandleGetRandom(wr http.ResponseWriter, req *http.Request
 	rng := rand.NewChaCha8(seed)
 	wr.Header().Set("Content-Length", strconv.FormatInt(length, 10))
 	wr.WriteHeader(http.StatusOK)
-	io.Copy(wr, io.LimitReader(rng, length))
+	respReader := io.NopCloser(io.LimitReader(rng, length))
+	s.forward(req.Context(), username, wrapH1RespWriter(wr), wrapH1ReqBody(respReader), "tcp", "<GETRANDOM>")
 }
 
 func (s *ProxyHandler) isLoopback(req *http.Request) (string, bool) {
